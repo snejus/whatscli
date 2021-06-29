@@ -214,28 +214,28 @@ func handleFocusInput(ev *tcell.EventKey) *tcell.EventKey {
 	return nil
 }
 
-func handleCopyUser(ev *tcell.EventKey) *tcell.EventKey {
-	if hls := textView.GetHighlights(); len(hls) > 0 {
-		for _, val := range curRegions {
-			if val.Id == hls[0] {
-				clipboard.WriteAll(val.ContactId, "clipboard")
-				PrintText("copied id of " + val.ContactName + " to clipboard")
-			}
-		}
-		ResetMsgSelection()
-	} else if currentReceiver.Id != "" {
-		clipboard.WriteAll(currentReceiver.Id, "clipboard")
-		PrintText("copied id of " + currentReceiver.Name + " to clipboard")
-	}
-	return nil
-}
+// func handleCopyUser(ev *tcell.EventKey) *tcell.EventKey {
+// 	if hls := textView.GetHighlights(); len(hls) > 0 {
+// 		for _, val := range curRegions {
+// 			if val.Id == hls[0] {
+// 				clipboard.WriteAll(val.ContactId, "clipboard")
+// 				PrintText("copied id of " + val.ContactName + " to clipboard")
+// 			}
+// 		}
+// 		ResetMsgSelection()
+// 	} else if currentReceiver.Id != "" {
+// 		clipboard.WriteAll(currentReceiver.Id, "clipboard")
+// 		PrintText("copied id of " + currentReceiver.Name + " to clipboard")
+// 	}
+// 	return nil
+// }
 
-func handlePasteUser(ev *tcell.EventKey) *tcell.EventKey {
-	if clip, err := clipboard.ReadAll("clipboard"); err == nil {
-		textInput.SetText(textInput.GetText() + " " + clip)
-	}
-	return nil
-}
+// func handlePasteUser(ev *tcell.EventKey) *tcell.EventKey {
+// 	if clip, err := clipboard.ReadAll("clipboard"); err == nil {
+// 		textInput.SetText(textInput.GetText() + " " + clip)
+// 	}
+// 	return nil
+// }
 
 func handleQuit(ev *tcell.EventKey) *tcell.EventKey {
 	sessionManager.CommandChannel <- messages.Command{"disconnect", nil}
@@ -338,12 +338,12 @@ func LoadShortcuts() {
 	if err := keyBindings.Set(config.Config.Keymap.CommandRead, handleCommand("read")); err != nil {
 		PrintErrorMsg("command_read:", err)
 	}
-	if err := keyBindings.Set(config.Config.Keymap.Copyuser, handleCopyUser); err != nil {
-		PrintErrorMsg("copyuser:", err)
-	}
-	if err := keyBindings.Set(config.Config.Keymap.Pasteuser, handlePasteUser); err != nil {
-		PrintErrorMsg("pasteuser:", err)
-	}
+	// if err := keyBindings.Set(config.Config.Keymap.Copyuser, handleCopyUser); err != nil {
+	// 	PrintErrorMsg("copyuser:", err)
+	// }
+	// if err := keyBindings.Set(config.Config.Keymap.Pasteuser, handlePasteUser); err != nil {
+	// 	PrintErrorMsg("pasteuser:", err)
+	// }
 	if err := keyBindings.Set(config.Config.Keymap.CommandBacklog, handleCommand("backlog")); err != nil {
 		PrintErrorMsg("command_backlog:", err)
 	}
@@ -365,12 +365,12 @@ func LoadShortcuts() {
 	if err := keysMessages.Set(config.Config.Keymap.MessageOpen, handleMessageCommand("open")); err != nil {
 		PrintErrorMsg("message_open:", err)
 	}
-	if err := keysMessages.Set(config.Config.Keymap.Copyuser, handleCopyUser); err != nil {
-		PrintErrorMsg("copyuser:", err)
-	}
-	if err := keysMessages.Set(config.Config.Keymap.Pasteuser, handlePasteUser); err != nil {
-		PrintErrorMsg("pasteuser:", err)
-	}
+	// if err := keysMessages.Set(config.Config.Keymap.Copyuser, handleCopyUser); err != nil {
+	// 	PrintErrorMsg("copyuser:", err)
+	// }
+	// if err := keysMessages.Set(config.Config.Keymap.Pasteuser, handlePasteUser); err != nil {
+	// 	PrintErrorMsg("pasteuser:", err)
+	// }
 	if err := keysMessages.Set(config.Config.Keymap.MessageShow, handleMessageCommand("show")); err != nil {
 		PrintErrorMsg("message_show:", err)
 	}
@@ -456,8 +456,8 @@ func PrintCommands() {
 	fmt.Fprintln(textView, "[::b]", cmdPrefix, "admin[::-] [user-id[]  = Set admin role for user in group")
 	fmt.Fprintln(textView, "[::b]", cmdPrefix, "removeadmin[::-] [user-id[]  = Remove admin role for user in group")
 	fmt.Fprintln(textView, "")
-	fmt.Fprintln(textView, "Use[::b]", config.Config.Keymap.Copyuser, "[::-]to copy a selected user id to clipboard")
-	fmt.Fprintln(textView, "Use[::b]", config.Config.Keymap.Pasteuser, "[::-]to paste clipboard to text input")
+	// fmt.Fprintln(textView, "Use[::b]", config.Config.Keymap.Copyuser, "[::-]to copy a selected user id to clipboard")
+	// fmt.Fprintln(textView, "Use[::b]", config.Config.Keymap.Pasteuser, "[::-]to paste clipboard to text input")
 	fmt.Fprintln(textView, "")
 }
 
