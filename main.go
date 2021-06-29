@@ -14,12 +14,13 @@ import (
 	"github.com/normen/whatscli/messages"
 	"github.com/rivo/tview"
 	"github.com/skratchdot/open-golang/open"
-	"github.com/zyedidia/clipboard"
+	// "github.com/zyedidia/clipboard"
 )
 
 var VERSION string = "v1.0.9"
 
 var sndTxt string = ""
+var prevCommands []string
 var currentReceiver messages.Chat = messages.Chat{}
 var curRegions []messages.Message
 
@@ -69,8 +70,7 @@ func main() {
 	topBar = tview.NewTextView()
 	topBar.SetDynamicColors(true)
 	topBar.SetScrollable(false)
-	topBar.SetText(fmt.Sprintf("[::b] WhatsCLI %s [-::d]Type %shelp or press %s for help",
-        VERSION, cmdPrefix, config.Config.Keymap.CommandHelp))
+	topBar.SetText(fmt.Sprintf("[::b] WhatsCLI %s [-::d]Type %shelp or press %s for help", VERSION, cmdPrefix, config.Config.Keymap.CommandHelp))
 	topBar.SetBackgroundColor(confColor(colors.Background))
 
 	infoBar = tview.NewTextView()
@@ -94,9 +94,7 @@ func main() {
 	textInput.SetBackgroundColor(confColor(colors.Background))
 	textInput.SetFieldBackgroundColor(confColor(colors.Background))
 	textInput.SetFieldTextColor(confColor(colors.InputText))
-	textInput.SetChangedFunc(func(change string) {
-		sndTxt = change
-	})
+	textInput.SetChangedFunc(func(change string) { sndTxt = change })
 	textInput.SetDoneFunc(EnterCommand)
 	textInput.SetInputCapture(func(event *tcell.EventKey) *tcell.EventKey {
 		if event.Key() == tcell.KeyDown {
@@ -136,7 +134,7 @@ func main() {
 	app.EnableMouse(true)
 	app.SetFocus(textInput)
 	if err := sessionManager.StartManager(); err != nil {
-		PrintError(err)
+		PrintError("session", err)
 	}
 	LoadShortcuts()
 	app.Run()
@@ -144,7 +142,7 @@ func main() {
 
 // creates the TreeView for chats
 func MakeTree() *tview.TreeView {
-	rootDir := "Chats"
+    rootDir := "     [::b]CHATS[::-]"
 	chatRoot = tview.NewTreeNode(rootDir).SetColor(tcell.ColorNames[config.Config.Colors.ListHeader])
 	treeView = tview.NewTreeView().SetRoot(chatRoot).SetCurrentNode(chatRoot)
 	treeView.SetBackgroundColor(tcell.ColorNames[config.Config.Colors.Background])
@@ -324,64 +322,58 @@ func LoadShortcuts() {
 	// global bindings for app
 	keyBindings = cbind.NewConfiguration()
 	if err := keyBindings.Set(config.Config.Keymap.FocusMessages, handleFocusMessage); err != nil {
-		PrintErrorMsg("focus_messages:", err)
+		PrintError("focus_messages", err)
 	}
 	if err := keyBindings.Set(config.Config.Keymap.FocusInput, handleFocusInput); err != nil {
-		PrintErrorMsg("focus_input:", err)
+		PrintError("focus_input", err)
 	}
 	if err := keyBindings.Set(config.Config.Keymap.FocusChats, handleFocusContacts); err != nil {
-		PrintErrorMsg("focus_contacts:", err)
+		PrintError("focus_contacts", err)
 	}
 	if err := keyBindings.Set(config.Config.Keymap.SwitchPanels, handleSwitchPanels); err != nil {
-		PrintErrorMsg("switch_panels:", err)
+		PrintError("switch_panels", err)
 	}
 	if err := keyBindings.Set(config.Config.Keymap.CommandRead, handleCommand("read")); err != nil {
-		PrintErrorMsg("command_read:", err)
+		PrintError("command_read", err)
 	}
-	// if err := keyBindings.Set(config.Config.Keymap.Copyuser, handleCopyUser); err != nil {
-	// 	PrintErrorMsg("copyuser:", err)
-	// }
-	// if err := keyBindings.Set(config.Config.Keymap.Pasteuser, handlePasteUser); err != nil {
-	// 	PrintErrorMsg("pasteuser:", err)
-	// }
 	if err := keyBindings.Set(config.Config.Keymap.CommandBacklog, handleCommand("backlog")); err != nil {
-		PrintErrorMsg("command_backlog:", err)
+		PrintError("command_backlog", err)
 	}
 	if err := keyBindings.Set(config.Config.Keymap.CommandConnect, handleCommand("login")); err != nil {
-		PrintErrorMsg("command_connect:", err)
+		PrintError("command_connect", err)
 	}
 	if err := keyBindings.Set(config.Config.Keymap.CommandQuit, handleQuit); err != nil {
-		PrintErrorMsg("command_quit:", err)
+		PrintError("command_quit", err)
 	}
 	if err := keyBindings.Set(config.Config.Keymap.CommandHelp, handleHelp); err != nil {
-		PrintErrorMsg("command_help:", err)
+		PrintError("command_help", err)
 	}
 	app.SetInputCapture(keyBindings.Capture)
 	// bindings for chat message text view
 	keysMessages := cbind.NewConfiguration()
 	if err := keysMessages.Set(config.Config.Keymap.MessageDownload, handleMessageCommand("download")); err != nil {
-		PrintErrorMsg("message_download:", err)
+		PrintError("message_download", err)
 	}
 	if err := keysMessages.Set(config.Config.Keymap.MessageOpen, handleMessageCommand("open")); err != nil {
-		PrintErrorMsg("message_open:", err)
+		PrintError("message_open", err)
 	}
 	// if err := keysMessages.Set(config.Config.Keymap.Copyuser, handleCopyUser); err != nil {
-	// 	PrintErrorMsg("copyuser:", err)
+	// 	PrintError("copyuser", err)
 	// }
 	// if err := keysMessages.Set(config.Config.Keymap.Pasteuser, handlePasteUser); err != nil {
-	// 	PrintErrorMsg("pasteuser:", err)
+	// 	PrintError("pasteuser", err)
 	// }
 	if err := keysMessages.Set(config.Config.Keymap.MessageShow, handleMessageCommand("show")); err != nil {
-		PrintErrorMsg("message_show:", err)
+		PrintError("message_show", err)
 	}
 	if err := keysMessages.Set(config.Config.Keymap.MessageUrl, handleMessageCommand("url")); err != nil {
-		PrintErrorMsg("message_url:", err)
+		PrintError("message_url", err)
 	}
 	if err := keysMessages.Set(config.Config.Keymap.MessageInfo, handleMessageCommand("info")); err != nil {
-		PrintErrorMsg("message_info:", err)
+		PrintError("message_info", err)
 	}
 	if err := keysMessages.Set(config.Config.Keymap.MessageRevoke, handleMessageCommand("revoke")); err != nil {
-		PrintErrorMsg("message_revoke:", err)
+		PrintError("message_revoke", err)
 	}
 	keysMessages.SetKey(tcell.ModNone, tcell.KeyEscape, handleExitMessages)
 	keysMessages.SetKey(tcell.ModNone, tcell.KeyUp, handleMessagesMove(-1))
@@ -401,64 +393,77 @@ func LoadShortcuts() {
 	treeView.SetInputCapture(keysChatPanel.Capture)
 }
 
+// prints text to the TextView
+func PrintText(txt string) {
+	fmt.Fprintln(textView, txt)
+}
+
+func PrintCmd(command string, argument string, description string) {
+	cmdPrefix := config.Config.General.CmdPrefix
+    PrintText(fmt.Sprintf("    [::b]%s%-16s[::-] %-15s - %s", cmdPrefix, command, argument, description))
+}
+
+func PrintBinding(binding string, description string) {
+    PrintText(fmt.Sprintf("    [::b]%-10s[::-] - %s", binding, description))
+}
+
 // prints help to chat view
 func PrintHelp() {
 	cmdPrefix := config.Config.General.CmdPrefix
     keymap := config.Config.Keymap
-	fmt.Fprintln(textView, "[-::u]Keys:[-::-]")
-	fmt.Fprintln(textView, "")
-	fmt.Fprintln(textView, "Global")
-	fmt.Fprintln(textView, "[::b] Up/Down j/k[::-] = Scroll history/chats")
-	fmt.Fprintln(textView, "[::b]", keymap.SwitchPanels, "[::-] = Switch input/chats")
-	fmt.Fprintln(textView, "[::b]", keymap.FocusMessages, "[::-] = Focus message panel")
-	fmt.Fprintln(textView, "[::b]", keymap.CommandQuit, "[::-] = Exit app")
-	fmt.Fprintln(textView, "")
-	fmt.Fprintln(textView, "[-::-]Message panel[-::-]")
-	fmt.Fprintln(textView, "[::b] Up/Down[::-] = select message")
-	fmt.Fprintln(textView, "[::b]", keymap.MessageDownload, "[::-] = Download attachment")
-	fmt.Fprintln(textView, "[::b]", keymap.MessageOpen, "[::-] = Download & open attachment")
-	fmt.Fprintln(textView, "[::b]", keymap.MessageShow, "[::-] = Download & show image using", config.Config.General.ShowCommand)
-	fmt.Fprintln(textView, "[::b]", keymap.MessageUrl, "[::-] = Find URL in message and open it")
-	fmt.Fprintln(textView, "[::b]", keymap.MessageRevoke, "[::-] = Revoke message")
-	fmt.Fprintln(textView, "[::b]", keymap.MessageInfo, "[::-] = Info about message")
-	fmt.Fprintln(textView, "")
-	fmt.Fprintln(textView, "Config file in ->", config.GetConfigFilePath())
-	fmt.Fprintln(textView, "")
-	fmt.Fprintln(textView, "Type [::b]", cmdPrefix, "commands[::-] to see all commands")
-	fmt.Fprintln(textView, "")
+	PrintText("[-::u]Keys:[-::-]")
+	PrintText("")
+    PrintText("[-::b]GLOBAL[-::-]")
+	PrintBinding("Up/Down j/k", "scroll history/chats")
+	PrintBinding(keymap.SwitchPanels, "switch input/chats")
+	PrintBinding(keymap.FocusMessages, "focus message panel")
+	PrintBinding(keymap.CommandQuit, "exit")
+	PrintText("")
+	PrintText("[-::b]MESSAGE PANEL[-::-]")
+	PrintBinding("Up/Down", "select message")
+	PrintBinding(keymap.MessageDownload, "download attachment")
+	PrintBinding(keymap.MessageOpen, "download & open attachment")
+	PrintBinding(keymap.MessageShow, "download & show image using " + config.Config.General.ShowCommand)
+	PrintBinding(keymap.MessageUrl, "find URL in message and open it")
+	PrintBinding(keymap.MessageRevoke, "revoke message")
+	PrintBinding(keymap.MessageInfo, "info about message")
+    PrintBinding(keymap.Copyuser, "copy a selected user id to clipboard")
+	PrintBinding(keymap.Pasteuser, "paste clipboard to text input")
+	PrintText("")
+	PrintText("Config file in -> " + config.GetConfigFilePath())
+	PrintText("")
+	PrintText(fmt.Sprintf("Type [::b]%scommands[::-] to see all commands", cmdPrefix))
+	PrintText("")
 }
 
 func PrintCommands() {
-	cmdPrefix := config.Config.General.CmdPrefix
-	fmt.Fprintln(textView, "")
-	fmt.Fprintln(textView, "[-::u]Commands:[-::-]")
-	fmt.Fprintln(textView, "")
-	fmt.Fprintln(textView, "[-::-]Global[-::-]")
-	fmt.Fprintln(textView, "[::b]", cmdPrefix+"connect [::-]or[::b]", config.Config.Keymap.CommandConnect, "[::-] = (Re)Connect to server")
-	fmt.Fprintln(textView, "[::b]", cmdPrefix+"disconnect[::-]  = Close the connection")
-	fmt.Fprintln(textView, "[::b]", cmdPrefix+"logout[::-]  = Remove login data from computer")
-	fmt.Fprintln(textView, "[::b]", cmdPrefix+"quit [::-]or[::b]", config.Config.Keymap.CommandQuit, "[::-] = Exit app")
-	fmt.Fprintln(textView, "")
-	fmt.Fprintln(textView, "[-::-]Chat[-::-]")
-	fmt.Fprintln(textView, "[::b] "+cmdPrefix+"backlog [::-]or[::b]", config.Config.Keymap.CommandBacklog, "[::-] = load next", config.Config.General.BacklogMsgQuantity, "previous messages")
-	fmt.Fprintln(textView, "[::b] "+cmdPrefix+"read [::-]or[::b]", config.Config.Keymap.CommandRead, "[::-] = mark new messages in chat as read")
-	fmt.Fprintln(textView, "[::b] "+cmdPrefix+"upload[::-] /path/to/file  = Upload any file as document")
-	fmt.Fprintln(textView, "[::b] "+cmdPrefix+"sendimage[::-] /path/to/file  = Send image message")
-	fmt.Fprintln(textView, "[::b] "+cmdPrefix+"sendvideo[::-] /path/to/file  = Send video message")
-	fmt.Fprintln(textView, "[::b] "+cmdPrefix+"sendaudio[::-] /path/to/file  = Send audio message")
-	fmt.Fprintln(textView, "")
-	fmt.Fprintln(textView, "[-::-]Groups[-::-]")
-	fmt.Fprintln(textView, "[::b]", cmdPrefix, "leave[::-]  = Leave group")
-	fmt.Fprintln(textView, "[::b]", cmdPrefix, "create[::-] [user-id[] [user-id[] Group Subject  = Create group with users")
-	fmt.Fprintln(textView, "[::b]", cmdPrefix, "subject[::-] New Subject  = Change subject of group")
-	fmt.Fprintln(textView, "[::b]", cmdPrefix, "add[::-] [user-id[]  = Add user to group")
-	fmt.Fprintln(textView, "[::b]", cmdPrefix, "remove[::-] [user-id[]  = Remove user from group")
-	fmt.Fprintln(textView, "[::b]", cmdPrefix, "admin[::-] [user-id[]  = Set admin role for user in group")
-	fmt.Fprintln(textView, "[::b]", cmdPrefix, "removeadmin[::-] [user-id[]  = Remove admin role for user in group")
-	fmt.Fprintln(textView, "")
-	// fmt.Fprintln(textView, "Use[::b]", config.Config.Keymap.Copyuser, "[::-]to copy a selected user id to clipboard")
-	// fmt.Fprintln(textView, "Use[::b]", config.Config.Keymap.Pasteuser, "[::-]to paste clipboard to text input")
-	fmt.Fprintln(textView, "")
+    keymap := config.Config.Keymap
+	PrintText("")
+	PrintText("[-::u]Commands:[-::-]")
+	PrintText("")
+    PrintText("[-::b]GLOBAL[::-]")
+	PrintCmd("connect, " + keymap.CommandConnect, "", "(re)connect to server")
+	PrintCmd("disconnect", "", "close the connection")
+	PrintCmd("logout", "", "remove login data from computer")
+	PrintCmd("quit, " + keymap.CommandQuit, "", "exit app")
+	PrintText("")
+    PrintText("[-::b]CHAT[::-]")
+	PrintCmd("backlog, " + keymap.CommandBacklog, "", fmt.Sprintf("load %d previous messages", config.Config.General.BacklogMsgQuantity))
+    PrintCmd("read, " + keymap.CommandRead, "", "mark new messages in chat as read")
+	PrintCmd("upload", "/path/to/file", "upload any file as document")
+	PrintCmd("sendimage", "/path/to/file", "send image message")
+	PrintCmd("sendvideo", "/path/to/file", "send video message")
+    PrintCmd("sendaudio", "/path/to/file", "send audio message")
+	PrintText("")
+    PrintText("[-::b]GROUPS[::-]")
+	PrintCmd("leave", "", "leave group")
+	PrintCmd("create", "[user-id[] group subject", "create group with users")
+	PrintCmd("subject", "new-subject", "change subject")
+	PrintCmd("add", "[user-id[]", "add user to group")
+    PrintCmd("remove", "[user-id[]", "remove user from group")
+	PrintCmd("admin", "[user-id[]", "set admin role for user")
+	PrintCmd("removeadmin", "[user-id[]", "remove user's admin role")
+	PrintText("")
 }
 
 // called when text is entered by the user
@@ -540,25 +545,12 @@ func ResetMsgSelection() {
 	textView.ScrollToEnd()
 }
 
-// prints text to the TextView
-func PrintText(txt string) {
-	fmt.Fprintln(textView, txt)
-}
-
 // prints an error to the TextView
-func PrintError(err error) {
+func PrintError(source string, err error) {
 	if err == nil {
 		return
 	}
-	fmt.Fprintln(textView, "["+config.Config.Colors.Negative+"]", err.Error(), "[-]")
-}
-
-// prints an error to the TextView
-func PrintErrorMsg(text string, err error) {
-	if err == nil {
-		return
-	}
-	fmt.Fprintln(textView, "["+config.Config.Colors.Negative+"]", text, err.Error(), "[-]")
+    PrintText(fmt.Sprintf("[%s]Error in %s: [::b]%s[::-][-]", config.Config.Colors.Negative, source, err.Error()))
 }
 
 // prints an image attachment to the TextView (by message id)
@@ -581,18 +573,20 @@ func PrintImage(path string) {
 			return
 		}
 	}
-	PrintError(err)
+	PrintError("print_image", err)
 }
 
 // updates the status bar
 func UpdateStatusBar(statusInfo messages.SessionStatus) {
-    var conn string
+    conn := "offline"
+    batteryStatus := "  "
 	if statusInfo.Connected {
         conn = "online"
-	} else {
-        conn = "offline"
 	}
-	infoBar.SetText(fmt.Sprintf("   %s    %d%% %s", conn, statusInfo.BatteryCharge, statusInfo.LastSeen))
+	if statusInfo.BatteryLoading {
+        batteryStatus = "[green]  [-]"
+	}
+	infoBar.SetText(fmt.Sprintf("   %s %s %d%% %s", conn, batteryStatus, statusInfo.BatteryCharge, statusInfo.LastSeen))
 }
 
 // sets the current chat, loads text from storage to TextView
@@ -615,20 +609,16 @@ func getMessagesString(msgs []messages.Message) string {
 }
 
 // create a formatted string with regions based on message ID from a text message
-//TODO: optimize, use Sprintf etc
 func getTextMessageString(msg *messages.Message) string {
-	colorMe := config.Config.Colors.ChatMe
-	colorContact := config.Config.Colors.ChatContact
 	text := tview.Escape(msg.Text)
 	if msg.Forwarded {
 		text = fmt.Sprintf("[%s]%s[-]", config.Config.Colors.ForwardedText, text)
 	}
-	tim := time.Unix(int64(msg.Timestamp), 0)
-	time := tim.Format("2 Jan 15:04")
+	time := time.Unix(int64(msg.Timestamp), 0).Format("2 Jan 15:04")
     name := msg.ContactShort
-    color := colorContact
+    color := config.Config.Colors.ChatContact
 	if msg.FromMe {
-		color = colorMe
+		color = config.Config.Colors.ChatMe
         name = "Me"
     }
     return fmt.Sprintf("[\"%s\"][-::d](%s) [%s::b]%s [-::-]%s[\"\"]", msg.Id, time, color, name, text)
@@ -672,7 +662,8 @@ func (u UiHandler) SetChats(ids []messages.Chat) {
             }
 			name := element.Name
 			if name == "" {
-				name = strings.TrimSuffix(strings.TrimSuffix(element.Id, messages.GROUPSUFFIX), messages.CONTACTSUFFIX)
+				// name = strings.TrimSuffix(strings.TrimSuffix(element.Id, messages.GROUPSUFFIX), messages.CONTACTSUFFIX)
+				name = element.Id
 			}
 			if element.Unread > 0 {
                 name = fmt.Sprintf("[::b](%d) %s[-::d][-]", element.Unread, name)
@@ -682,7 +673,7 @@ func (u UiHandler) SetChats(ids []messages.Chat) {
 				//time := tim.Format("02-01-06 15:04:05")
 				//name += since
 			}
-			node := tview.NewTreeNode(name).
+			node := tview.NewTreeNode(" " + name).
 				SetReference(element).
 				SetSelectable(true)
 			if element.IsGroup {
@@ -703,7 +694,7 @@ func (u UiHandler) SetChats(ids []messages.Chat) {
 }
 
 func (u UiHandler) PrintError(err error) {
-	PrintError(err)
+	PrintError("ui_handler", err)
 }
 
 func (u UiHandler) PrintText(msg string) {
